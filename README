@@ -1,0 +1,55 @@
+Users of Structure (Pritchard et al, 2000) may be familiar with the interface of the BioHPC cluster at Cornell. Unfortunately, guest access was discontinued in May, 2011. While Structure (v. 2.3.1.2) is installed (at /opt/apps/sdg/structure/), several features of the web-based BioHPC cluster interface can be replaced with a pipeline of qsub and python scripts. The scripts can be found at /opt/apps/sdg/scripts/ . Some keystrokes can be saved by setting $SDG_ROOT in the shell profile (See SDG Group Profile Setup)
+
+1. Generate the input files
+
+To run Structure you need a project_data file and a mainparams file. The easiest way to generate these files is to load in  your data into the GUI version of Structure on  your own computer. If your file is already formatted for the program GenAlEx, you can get your data into the format required to make a structure project using popgen_parse.py
+
+>> python popgen_parse.py -o structrure myfile.genalex
+
+Where myfile.genalex is a tab-delimited text file containing your data.
+
+Load the data in to the GUI version of structure and set up your parameters. Run a test run (with perhaps 10K burnin and 100K generations) to see if everything is working. Then upload the project_data file, the mainparams file, and the extraparams file (this will probably be empty, but is necessary) to your computer cluster.
+
+2. Running Replicates of Structure
+Structure is frequently run multiple times with the same parameter settings, and with multiple values of k (the number of clusters). Both of these can be achieved within one qsub script. The sample qsub script below will submit an array job (one for each value of k) and will employ a loop to run each several times.
+
+######################QSub Script#################
+
+#! /bin/bash
+
+
+#$ -S /bin/bash -cwd
+#$ -M myemail@domain.com -m e
+#$ -N name_of_script
+#$ -o script.out -j y
+#$ -t 1-5
+
+#10 is the number of replicates at each value of K.
+for rep in {1..10} 
+do 
+structure -m mainparams -K $SGE_TASK_ID -i project_data -o outfile_k${SGE_TASK_ID}_rep${rep}
+done
+
+####################################################
+
+To set the values of K, change the line with -t This line sets the $SGE_TASK_ID variable and submits an array of jobs. The $SGE_TASK_ID variable is passed to the script so that the value of K and the output file names are changed for each job in the array.
+
+To set the number of replicates, change the "numreps" line.
+
+This script is written in bash. You may need to set your $PATH variable in your .bashrc in order to run it correctly (See SDG Group Profile Setup)
+
+3. Summarizing Replicate Runs
+The BioHPC cluster would return a file, simsum.txt, which would have the likelihood and Fst values for replicate runs of Structure. If you've run Structure as above, the following python script can create this file. Indicate all of the output files from Strucutre in a list. Wildcard expansion should work, so if you files are of the form outfile_k2_rep2 you can simply write outfile*. You also need to provide the maximum value of K in your dataset:
+
+>> python simsum.py 5 outfile*
+
+For each value of K you wish to investigate further, the Q-matricies from each replicate run of Structure will be slightly different. Use the program CLUMPP (in $SDG_ROOT/bin) to determine a single Q-matrix. First, format the input files for CLUMPP with another python script. Specify an output file name, and then list all of the replicate runs-- wildcard expansion should work here too:
+
+>> python structure2clumpp.py outputfilename outfile_k2*
+
+You will also have to setup the paramfile (see the CLUMPP manual for instructions). Depending on the size of the dataset, CLUMPP may take a few seconds to several hours. Either run from a qsub script or in an Interactive Job
+
+4. Visualizing Results
+Visualization of the likelihoods from replicate runs at each value of K, along with the post-hoc delta-K statistic (Evanno et al., 2003), can be done with an R script: see "deltak.R" . This script is perhaps best run on your own computer so that graphics parameters may be adjusted.
+
+Similarly, a script scructure_barplot.R can output the familiar barplot: one bar per individual, different colors representing admixture/population assignment. If a list of geographic or putative populations is given, they will be marked on the graphic.
