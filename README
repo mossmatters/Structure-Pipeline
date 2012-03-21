@@ -1,4 +1,4 @@
-Users of Structure (Pritchard et al, 2000) may be familiar with the interface of the BioHPC cluster at Cornell. Unfortunately, guest access was discontinued in May, 2011. While Structure (v. 2.3.1.2) is installed (at /opt/apps/sdg/structure/), several features of the web-based BioHPC cluster interface can be replaced with a pipeline of qsub and python scripts. The scripts can be found at /opt/apps/sdg/scripts/ . Some keystrokes can be saved by setting $SDG_ROOT in the shell profile (See SDG Group Profile Setup)
+Users of Structure (Pritchard et al, 2000) may be familiar with the interface of the BioHPC cluster at Cornell. Unfortunately, guest access was discontinued in May, 2011. If you have structure installed on your SGE supercomuting cluster, several features of the web-based BioHPC cluster interface can be replaced with a pipeline of qsub and python scripts. This pipleline will guide you through setting up your datafile and parameter settings, running structure efficiently at many values of K, summarizing those results using CLUMPP, and vizualizing the results using custom R scripts.
 
 1. Generate the input files
 
